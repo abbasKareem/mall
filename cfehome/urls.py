@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # path('__debug__/', include('debug_toolbar.urls')),
 
-    # path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls')),
 
     # api
 

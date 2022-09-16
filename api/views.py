@@ -10,9 +10,11 @@ from rest_framework import permissions
 from rest_framework import authentication
 from rest_framework import pagination
 
-from .models import Product,  CustomUser, Order, Category, ProductReview
+from .models import Product,  CustomUser, Order, Category, ProductReview, WishList
 # from .serializers import ProductSerializer, CustomUserSerializer, OrderSerializer, MyOrderSerializer, RegisterSerializer, CategorySerializer, ProductReviewSerializer
 from .serializers import *
+
+from django.core.exceptions import SuspiciousOperation
 
 # =================Products============
 
@@ -192,7 +194,6 @@ class DetailOrderView(generics.RetrieveAPIView):
 
 
 class OrderCreateView(generics.CreateAPIView):
-    serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -251,34 +252,66 @@ class RegisterAPIView(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# =================Shops============
 class ListAllShopView(generics.ListAPIView):
     queryset = CustomUser.objects.filter(is_staff=True).only(
         'username', 'shop_discription', 'image')
     serializer_class = ListAllShopSerializer
-    # def list(self, request):
-    #     pass
 
-    # def create(self, request):
-    #     pass
+# =================Shops============
 
-    # def retrieve(self, request, pk=None):
-    #     pass
 
-    # def update(self, request, pk=None):
-    #     pass
+# =================WishList============
+class WishListCreateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-    # def partial_update(self, request, pk=None):
-    #     pass
+    def post(self, request):
+        product = request.data.get('product')
+        user = CustomUser.objects.get(username=request.user)
+        try:
+            wish_list = WishList.objects.get(user__username=request.user)
+            wish_list.products.add(product)
+            wish_list.save()
 
-    # def destroy(self, request, pk=None):
-    #     pass
+        except WishList.DoesNotExist:
+            wish_list = WishList.objects.create(user=user)
+            wish_list.save()
+            wish_list.products.add(product)
+            wish_list.save()
 
-    # class PostList(viewsets.ModelViewSet):
-    #     permission_classes = [IsAuthenticated]
-    #     queryset = Post.postobjects.all()
-    #     serializer_class = PostSerializer
+        print(request.user)
+        return Response({'message': 'Product added to your wishlist Successfully!'}, status=status.HTTP_201_CREATED)
 
-    # class PostDetail(viewsets.ModelViewSet, PostUserWritePermission):
-    #     permission_classes = [PostUserWritePermission]
-    #     queryset = Post.objects.all()
-    #     serializer_class = PostSerializer
+
+class AllWishListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        all_wish_list = WishList.objects.filter(
+            user__username=request.user).order_by('-id')
+        if not all_wish_list:
+            return Response({'message': "You don't have any wishlist yet"}, status=status.HTTP_200_OK)
+
+        serializer = AllWishListSerializer(all_wish_list, many=True)
+
+        return Response(serializer.data)
+
+
+class DeleteWishListView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, id=None):
+        try:
+            wish_list = WishList.objects.filter(
+                user__username=request.user, pk=id).first()
+
+            if not wish_list:
+                return Response({'message': "No wish list found with this id"}, status=status.HTTP_404_NOT_FOUND)
+
+            wish_list.delete()
+        except WishList.DoesNotExist:
+            return Response({'message': "No wish list found with this id"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message', 'wish list deleted successfully'}, status=status.HTTP_200_OK)
+
+
+# =================WishList============

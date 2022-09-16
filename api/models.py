@@ -96,7 +96,6 @@ class Product(models.Model):
     return_policy = models.CharField(max_length=300, null=True, blank=True)
     view_count = models.PositiveIntegerField(default=0)
     is_public = models.BooleanField(default=True)
-    rating = models.IntegerField(default=0)
     objects = models.Manager()
     productobjects = ProductObjects()
 
@@ -200,3 +199,12 @@ class ProductReview(models.Model):
     def __str__(self):
         # return str(self.user.username) + " \t  Coment on Product:   " + str(self.product.title)
         return f"( {self.user.username} ) user comment on product:  ( {self.product.title} )"
+
+
+class WishList(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product)
+
+    def __str__(self):
+        return f"{self.user.username}"

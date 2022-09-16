@@ -1,13 +1,13 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
-from .models import Product, CustomUser, Order, Category, ProductReview
+from .models import Product, CustomUser, Order, Category, ProductReview, WishList
 
 
 class UserSerializer(ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['shop_name']
+        fields = ['id', 'shop_name']
 
 
 class UserOrderBySerializer(ModelSerializer):
@@ -48,9 +48,17 @@ class OrderProductSerializer(ModelSerializer):
         model = Product
 
 
+class ProductMyOrderSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'image',
+                  'selling_price', 'warranty', 'return_policy']
+
+
 class MyOrderSerializer(ModelSerializer):
     owner = UserSerializer()
     ordered_by = UserOrderBySerializer()
+    product = ProductMyOrderSerializer(many=True)
 
     class Meta:
         model = Order
@@ -106,3 +114,18 @@ class ListAllShopSerializer(ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['shop_name', 'shop_discription', 'image']
+
+
+class WishListProductSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'image', 'selling_price']
+
+
+class AllWishListSerializer(ModelSerializer):
+    products = WishListProductSerializer(many=True)
+
+    class Meta:
+        model = WishList
+        depth = 1
+        fields = ['products']

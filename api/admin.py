@@ -5,7 +5,7 @@ from django.conf import settings
 from django.http import HttpResponse
 import csv
 
-from .models import Category, Product,  Order, CustomUser, ProductReview
+from .models import Category, Product,  Order, CustomUser, ProductReview, WishList
 from .forms import CustomUserCreationForm
 
 
@@ -38,7 +38,7 @@ class UserAdminConfig(UserAdmin):
     model = CustomUser
     readonly_fields = ['points']
     search_fields = ('email', 'username', 'first_name',)
-    list_filter = ('is_staff', 'points', 'start_date')
+    list_filter = ('is_staff', 'points', 'start_date', 'username')
     ordering = ('-start_date',)
     list_display = ('email', 'username', 'first_name',
                     'is_staff')
@@ -46,8 +46,8 @@ class UserAdminConfig(UserAdmin):
         (None, {'fields': ('email', 'username', 'first_name',)}),
         ('Permissions', {'fields': ('is_staff', 'is_superuser',
                                     'groups', 'user_permissions')}),
-        ('Personal', {'fields': ('points',
-         'shop_name', 'image', 'shop_discription')}),
+        ('Shop Info', {'fields': ('shop_name', 'image', 'shop_discription')}),
+        ('Customer Info', {'fields': ('points',)})
     )
 
     add_fieldsets = (
@@ -60,7 +60,7 @@ class UserAdminConfig(UserAdmin):
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['id', 'image', 'title',  'user', 'price', 'selling_price',
-                    'category', 'view_count', 'is_public', 'rating']
+                    'category', 'view_count', 'is_public', ]
     ordering = ['-id']
     search_fields = ('title',)
     list_filter = ('price', 'selling_price', 'category',
@@ -117,11 +117,19 @@ class OrderAdmin(admin.ModelAdmin):
 
 class ProductReviewAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'product', 'review_rating']
+    list_filter = ['user', 'product', 'review_rating']
+    # list_display = ['user', 'review_rating']
+
+
+class WishListAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user']
 
 
 admin.site.register(CustomUser, UserAdminConfig)
 
+
 admin.site.register(ProductReview, ProductReviewAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Order, OrderAdmin)
-admin.site.register([Category])
+admin.site.register(Category)
+admin.site.register(WishList, WishListAdmin)

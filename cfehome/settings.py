@@ -382,4 +382,4 @@ JAZZMIN_UI_TWEAKS = {
 }
 JAZZMIN_UI_TWEAKS["dark_mode_theme"]
 
-# JAZZMIN_SETTINGS["show_ui_builder"] = True
+JAZZMIN_SETTINGS["show_ui_builder"] = True

@@ -37,13 +37,13 @@ def download_csv(modeladmin, request, queryset):
 class UserAdminConfig(UserAdmin):
     model = CustomUser
     readonly_fields = ['points']
-    search_fields = ('email', 'username', 'first_name',)
+    search_fields = ('email', 'username')
     list_filter = ('is_staff', 'points', 'start_date', 'username')
     ordering = ('-start_date',)
-    list_display = ('email', 'username', 'first_name',
+    list_display = ('email', 'username',
                     'is_staff')
     fieldsets = (
-        (None, {'fields': ('email', 'username', 'first_name',)}),
+        (None, {'fields': ('email', 'username',)}),
         ('Permissions', {'fields': ('is_staff', 'is_superuser',
                                     'groups', 'user_permissions')}),
         ('Shop Info', {'fields': ('shop_name', 'image', 'shop_discription')}),
@@ -53,7 +53,7 @@ class UserAdminConfig(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'first_name', 'password1', 'password2',  'is_staff')}
+            'fields': ('email', 'username', 'password1', 'password2',  'is_staff')}
          ),
     )
 

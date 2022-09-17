@@ -40,8 +40,6 @@ class CustomAccountManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=100, unique=True)
     username = models.CharField(max_length=150, unique=True)
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
     start_date = models.DateTimeField(default=timezone.now)
     image = models.ImageField(
         upload_to="users/%Y/%m/%d/", blank=True, null=True)
@@ -50,7 +48,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     # is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
-    shop_name = models.CharField(max_length=200, blank=True)
+    shop_name = models.CharField(max_length=200, blank=True, unique=True)
     points = models.IntegerField(default=0)
 
     objects = CustomAccountManager()

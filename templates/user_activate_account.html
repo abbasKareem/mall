@@ -52,8 +52,7 @@
           uid,
           token,
         }
-        // fetch("https://exchangemoneyapp.herokuapp.com/auth/users/activation/", {
-        fetch("http://localhost:8000/auth/users/activation/", {
+        fetch("https://ridoapp.onrender.com/auth/users/activation/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),

@@ -163,25 +163,34 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    # 'django_forest',
+    # L52DbpgUtLGxNiq
     'django_filters',
     'whitenoise',
-    'jazzmin',
+    # 'jazzmin',
+    # 'admin_tools_stats',  # this must be BEFORE 'admin_tools' and 'django.contrib.admin'
+    # 'django_nvd3',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    # 'django.contrib.sites',
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework_simplejwt',
-    # 'djoser',
+    'djoser',
     'rest_framework',
     'api',
     'cloudinary_storage',
     'cloudinary',
+    'django_admin_geomap',
     # "debug_toolbar",
+    'colorfield',
 
 ]
+
+# SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -201,7 +210,7 @@ ROOT_URLCONF = 'cfehome.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -223,7 +232,7 @@ WSGI_APPLICATION = 'cfehome.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'dbmall',
+#         'NAME': 'auth_system',
 #         'USER': 'postgres',
 #         'PASSWORD': 'abbas',
 #         'HOST': '127.0.0.1',
@@ -233,15 +242,39 @@ WSGI_APPLICATION = 'cfehome.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'malldb',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'malldb_ajqj',
         'USER': 'abbas',
-        'PASSWORD': 'cR2C9Wb5LZKFGgsJPGvX5ckePm0pEBYc',
-        'HOST': 'dpg-cch384g2i3mukrc0ou5g-a.frankfurt-postgres.render.com',
+        'PASSWORD': 'acU0ZdFp4FRhLMtgZ9Qfn1C3WVVboeB2',
+        'HOST': 'dpg-cd65pdun6mprs1pgmve0-a.frankfurt-postgres.render.com',
         'PORT': '5432',
-        # postgres://abbas:cR2C9Wb5LZKFGgsJPGvX5ckePm0pEBYc@dpg-cch384g2i3mukrc0ou5g-a.frankfurt-postgres.render.com/malldb
     }
 }
+
+# 1234test()00
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'repeaterhubhub@gmail.com'
+EMAIL_HOST_PASSWORD = 'yvslrolrksdjlpbc'
+EMAIL_USE_TLS = True
+
+# email: kareemabbas106@gmail.com
+# password: 1234
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'malldb_ajqj',
+#         'USER': 'abbas',
+#         'PASSWORD': 'acU0ZdFp4FRhLMtgZ9Qfn1C3WVVboeB2',
+#         'HOST': 'dpg-cd65pdun6mprs1pgmve0-a.frankfurt-postgres.render.com',
+#         'PORT': '5432',
+#         # postgres://abbas:acU0ZdFp4FRhLMtgZ9Qfn1C3WVVboeB2@dpg-cd65pdun6mprs1pgmve0-a.frankfurt-postgres.render.com/malldb_ajqj
+#         # postgres://abbas:cR2C9Wb5LZKFGgsJPGvX5ckePm0pEBYc@dpg-cch384g2i3mukrc0ou5g-a.frankfurt-postgres.render.com/malldb
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -265,11 +298,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-# LANGUAGE_CODE = 'ar'
+# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ar'
 
+TIME_ZONE = 'Asia/Baghdad'
 
-TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -302,8 +335,8 @@ REST_FRAMEWORK = {
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=2),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': False,
@@ -341,9 +374,12 @@ CLOUDINARY_STORAGE = {
     'API_KEY': '213571268133569',
     'API_SECRET': 'fGwnIb8J8kzIpCseo0kzfC-npp8'
 }
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'cfehome/static')
+]
 
 
-# DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticHashedCloudinaryStorage'
 
 
@@ -383,3 +419,32 @@ JAZZMIN_UI_TWEAKS = {
 JAZZMIN_UI_TWEAKS["dark_mode_theme"]
 
 JAZZMIN_SETTINGS["show_ui_builder"] = True
+
+
+FOREST = {
+    'FOREST_URL': 'https://api.forestadmin.com',
+    'FOREST_ENV_SECRET': 'd8d506e03f11fb9d76035c20f487885aefa0292bd72b66f468dd261d5131b418',
+    'FOREST_AUTH_SECRET': '9a7328c18f9c9b13cc8763a54d1cf50247a3cd1941de4f4c'
+}
+APPEND_SLASH = False
+
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    'SEND_CONFIRMATION_EMAIL': True,
+    'SET_USERNAME_RETYPE': True,
+    'SET_PASSWORD_RETYPE': True,
+    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': 'email/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': 'activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
+    'SERIALIZERS': {
+        'user_create': 'api.serializers.UserCreateSerializer',
+        'user': 'api.serializers.UserCreateSerializer',
+        'current_user': 'api.serializers.UserCreateSerializer',
+        'user_delete': 'djoser.serializers.UserDeleteSerializer',
+    }
+}

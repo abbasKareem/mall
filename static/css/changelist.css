@@ -1,0 +1,15 @@
+#changelist .actions .button {
+  font-size: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: #f11d1d;
+  box-shadow: 0 -15px 20px -10px rgb(0 0 0 / 15%) inset;
+  cursor: pointer;
+  height: 24px;
+  line-height: 1;
+  padding: 4px 8px;
+  margin: 0;
+  width: 80px;
+  height: 30px;
+  color: #fff;
+}

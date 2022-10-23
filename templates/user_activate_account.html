@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSS only -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <title>User Confirmation Account</title>
+    <style>
+      .img_container {
+        /* background-color: red; */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body dir="rtl" onload="javascript:sent_confirm()">
+    <div class="container mt-5">
+      <div class="img_container">
+        <img
+          src="{% static '/img/rido.jpg' %}"
+          width="300"
+          height="300"
+          alt="logo"
+        />
+      </div>
+      <div class="alert alert-success text-center" role="alert">
+        <p>تم تفعيل حسابك بنجاح ، أرجع الى التطبيق وسجل الدخول</p>
+      </div>
+    </div>
+    <script>
+      var uid = "{{ uid }}"
+      var token = "{{ token }}"
+
+      function sent_confirm() {
+        var uid = "{{ uid }}"
+        var token = "{{ token }}"
+        const data = {
+          uid,
+          token,
+        }
+        // fetch("https://exchangemoneyapp.herokuapp.com/auth/users/activation/", {
+        fetch("http://localhost:8000/auth/users/activation/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }).then((res) => {
+          alert("success!")
+        })
+      }
+    </script>
+  </body>
+</html>

@@ -10,7 +10,9 @@ https://docs.djangoproject.com/en/4.0/howto/deployment/wsgi/
 import os
 
 from django.core.wsgi import get_wsgi_application
+# from django_forest import init_forest
+
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cfehome.settings')
-
+# init_forest()
 application = get_wsgi_application()

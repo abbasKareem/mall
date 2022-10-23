@@ -1,7 +1,20 @@
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
+from rest_framework.decorators import (api_view, permission_classes,
+                                       renderer_classes)
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+# from django.contrib.sites.models import Site
+from django.contrib import messages
+import requests
+from rest_framework.parsers import BaseParser
+import re
+import base64
+import pprint
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Avg
+from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination, BasePagination
 
 import django_filters.rest_framework
 from rest_framework import generics
@@ -10,30 +23,36 @@ from rest_framework import permissions
 from rest_framework import authentication
 from rest_framework import pagination
 
-from .models import Product,  CustomUser, Order, Category, ProductReview, WishList
+from .models import *
 # from .serializers import ProductSerializer, CustomUserSerializer, OrderSerializer, MyOrderSerializer, RegisterSerializer, CategorySerializer, ProductReviewSerializer
 from .serializers import *
 
-from django.core.exceptions import SuspiciousOperation
+from django.contrib.auth.hashers import make_password
 
 # =================Products============
 
 
 class ListProductView(generics.ListCreateAPIView):
     queryset = Product.productobjects.all().order_by('-id')
-    serializer_class = ProductSerializer
+    serializer_class = AllProductSerializer
+    # pagination_class = PageNumberPagination
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         title = request.data.get('title')
-        if title is None:
-            products = Product.productobjects.all().order_by('-id')
-            serializer = ProductSerializer(products, many=True)
+        paginator = LimitOffsetPagination()
+        if title is None or "":
+            products = Product.productobjects.all().order_by('-id')[:20]
+            result_page = paginator.paginate_queryset(products, request)
+            serializer = SearchProductSerializer(result_page, many=True)
             return Response(serializer.data)
+            # return paginator.get_paginated_response(serializer.data)
+            # return self.get_paginated_response(serializer.data)
 
-        products = Product.productobjects.filter(title__icontains=title)
-        serializer = ProductSerializer(products, many=True)
+        products = Product.productobjects.filter(title__icontains=title)[:20]
+        serializer = SearchProductSerializer(products, many=True)
         return Response(serializer.data)
+        # return self.get_paginated_response(data=serializer.data)
 
 
 class ListProductByShopName(generics.ListAPIView):
@@ -64,7 +83,10 @@ class DetailProductView(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
 
     def get(self, request, pk=None):
-        product = Product.productobjects.get(pk=pk)
+        try:
+            product = Product.productobjects.get(pk=pk)
+        except Product.DoesNotExist:
+            return Response({'message': 'Product not found with this id'}, status=status.HTTP_404_NOT_FOUND)
         shop_name = product.user
         print(shop_name.pk)
 
@@ -200,44 +222,72 @@ class OrderCreateView(generics.CreateAPIView):
         ordered_by = request.user
         user = CustomUser.objects.get(username=request.user)
         shop_name = request.data.get('shop_name')
-        shipping_address = request.data.get('shipping_address')
-        mobile = request.data.get('mobile')
-        product = request.data.get('product')
-        # print(product)
-        PRODUCTS_IDS = []
-        PRODUCTS_OBJECTS = []
+        lon = request.data.get('lon')
+        lat = request.data.get('lat')
+        message = request.data.get('message')
+        products = request.data.get('products')
+        total = request.data.get('total')
 
-        for p in product:
-            PRODUCTS_IDS.append(p)
-
-        total = 0
-        for p in PRODUCTS_IDS:
-            # try:
-            my_product = Product.objects.get(id=p)
-            # print(my_product.title)
-            PRODUCTS_OBJECTS.append(my_product)
-            # except Product.DoesNotExist:
-            #     return Response({'message': 'No product found with this id'}, status=status.HTTP_404_NOT_FOUND)
-
-            total += my_product.selling_price
         try:
-            owner = CustomUser.objects.get(shop_name=shop_name)
+            shop_obj = CustomUser.objects.get(shop_name=shop_name)
+
+            PRODUCTS_OBJECTS = []
+            QUANTITY = []
+            PRODUCTS_IDS = []
+            COLORS = []
+            SIZES = []
+
+            for p in products:
+                for key, value in p.items():
+                    if key == 'id':
+                        PRODUCTS_IDS.append(value)
+                    if key == 'quantity':
+                        QUANTITY.append(value)
+                    if key == 'sizes':
+                        SIZES.append(value)
+                    if key == 'colors':
+                        COLORS.append(value)
+            counter = 0
+
+            total_test = 0
+
+
+            for value in PRODUCTS_IDS:
+                try:
+                    product_obj = Product.objects.get(id=value)
+                except Product.DoesNotExist:
+                    return Response({'message': 'Erorr: Product with this id not found'}, status=status.HTTP_404_NOT_FOUND)
+                if product_obj.user.shop_name != shop_obj.shop_name:
+                    error_messsage = f"Error: The [{product_obj.title}] Does not belong to this shop, try again"
+                    return Response({'message': error_messsage}, status=status.HTTP_404_NOT_FOUND)
+                # total_test += product_obj.selling_price
+                product_order_obj = ProductOrder.objects.create(
+                    shop=shop_obj, title=product_obj.title, sizes=SIZES[counter], colors=COLORS[counter], price=product_obj.price, selling_price=product_obj.selling_price, quantity_ordered=QUANTITY[counter])
+                product_order_obj.save()
+                total_test += product_obj.selling_price * QUANTITY[counter]
+                counter += 1
+                PRODUCTS_OBJECTS.append(product_order_obj)
+            order = Order.objects.create(ordered_by=ordered_by, owner=shop_obj, email=request.user.email, mobile=request.user.phone,
+                                        total=total_test, order_status='Order Recevied', lat=lat, lon=lon, message=message, discount='No Discound')
+            order.save_base()
+            for p in PRODUCTS_OBJECTS:
+                order.product.add(p)
+
+            order.save()
+
+            qua = 0
+            for q in QUANTITY:
+                qua += q
+            print(total_test)
+
+
+            user.points += qua * 10
+            user.save()
+
+            return Response({'message': 'Order Created Successfully'}, status=status.HTTP_201_CREATED)
         except CustomUser.DoesNotExist:
-            return Response({"message": "No shop name found"}, status=status.HTTP_404_NOT_FOUND)
+             return Response({'message': "Error: No shop found with this name"}, status=status.HTTP_404_NOT_FOUND)
 
-        order = Order.objects.create(ordered_by=ordered_by, owner=owner, email=user.email, mobile=mobile,
-                                     total=total, shipping_address=shipping_address, order_status='Order Recevied')
-        order.save()
-        for p in PRODUCTS_OBJECTS:
-            order.product.add(p)
-            # order.save()
-            # print(p.title)
-        order.save()
-
-        user.points += 10
-        user.save()
-
-        return Response({'message': 'Order Created Successfully'}, status=status.HTTP_201_CREATED)
 # =================Orders============
 
 
@@ -254,8 +304,8 @@ class RegisterAPIView(generics.GenericAPIView):
 
 # =================Shops============
 class ListAllShopView(generics.ListAPIView):
-    queryset = CustomUser.objects.filter(is_staff=True).only(
-        'username', 'shop_discription', 'image')
+    queryset = CustomUser.objects.filter(is_staff=True).exclude(shop_name__isnull=True).only(
+        'username', 'shop_discription', 'image', 'phone')
     serializer_class = ListAllShopSerializer
 
 # =================Shops============
@@ -268,6 +318,9 @@ class WishListCreateView(generics.CreateAPIView):
     def post(self, request):
         product = request.data.get('product')
         user = CustomUser.objects.get(username=request.user)
+        if WishList.objects.filter(products=product, user=user).exists():
+            return Response({'message': 'Product already add to you wishlist!'}, status=status.HTTP_200_OK)
+
         try:
             wish_list = WishList.objects.get(user__username=request.user)
             wish_list.products.add(product)
@@ -288,7 +341,7 @@ class AllWishListView(generics.ListAPIView):
 
     def list(self, request):
         all_wish_list = WishList.objects.filter(
-            user__username=request.user).order_by('-id')
+            user__username=request.user).order_by('-id')[:30]
         if not all_wish_list:
             return Response({'message': "You don't have any wishlist yet"}, status=status.HTTP_200_OK)
 
@@ -302,16 +355,249 @@ class DeleteWishListView(generics.DestroyAPIView):
 
     def delete(self, request, id=None):
         try:
-            wish_list = WishList.objects.filter(
-                user__username=request.user, pk=id).first()
+            if not Product.objects.filter(pk=id).exists():
+                return Response({'message': "No product found with this id"}, status=status.HTTP_404_NOT_FOUND)
 
-            if not wish_list:
-                return Response({'message': "No wish list found with this id"}, status=status.HTTP_404_NOT_FOUND)
+            wish_list = WishList.objects.get(user__username=request.user)
 
-            wish_list.delete()
+            product = Product.objects.get(pk=id)
+            wish_list.products.remove(product)
+            wish_list.save()
         except WishList.DoesNotExist:
             return Response({'message': "No wish list found with this id"}, status=status.HTTP_404_NOT_FOUND)
         return Response({'message', 'wish list deleted successfully'}, status=status.HTTP_200_OK)
 
 
 # =================WishList============
+
+
+# =================Followers============
+
+
+class FollowersCreateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        shop_name = request.data.get('shop_name')
+        user = CustomUser.objects.get(username=request.user)
+
+        try:
+            try:
+                shop_obj = CustomUser.objects.get(shop_name=shop_name)
+            except CustomUser.DoesNotExist:
+                return Response({'message': 'No Shop found with this name'}, status=status.HTTP_404_NOT_FOUND)
+
+            try:
+                already_follow = Followers.objects.get(
+                    user=user, shops=shop_obj)
+                return Response({'message': 'You already follow this shop'}, status=status.HTTP_200_OK)
+            except:
+                follow = Followers.objects.get(user__username=request.user)
+                follow.shops.add(shop_obj)
+                follow.save()
+
+        except Followers.DoesNotExist:
+            follow = Followers.objects.create(user=user)
+            follow.save()
+            follow.shops.add(shop_obj)
+            follow.save()
+
+        return Response({'message': 'You successfully follow this shop'}, status=status.HTTP_201_CREATED)
+
+
+class AllFollowersView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        all_follower = Followers.objects.filter(
+            user__username=request.user).order_by('-id')
+        if not all_follower:
+            return Response({'message': "You are not following any shop"}, status=status.HTTP_200_OK)
+
+        serializer = AllFollowersSerializer(all_follower, many=True)
+
+        return Response(serializer.data)
+
+
+class UnfollowView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, shop_name=None):
+        try:
+            if not CustomUser.objects.filter(shop_name=shop_name).exists():
+                return Response({'message': "Shop not exist, Please provide valid shop name"}, status=status.HTTP_404_NOT_FOUND)
+
+            all_follower = Followers.objects.get(user__username=request.user)
+
+            shop = CustomUser.objects.get(shop_name=shop_name)
+            all_follower.shops.remove(shop)
+            all_follower.save()
+        except Followers.DoesNotExist:
+            return Response({'message': "No follower list found with this name"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Unfollow shop successfully'}, status=status.HTTP_200_OK)
+
+
+# =================Followers============
+
+
+class OrderCreateTestView(generics.CreateAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        ordered_by = request.user
+        shop_name = request.data.get('shop_name')
+        mobile = request.data.get('mobile')
+        lon = request.data.get('lon')
+        lat = request.data.get('lat')
+        message = request.data.get('message')
+        products = request.data.get('product')
+
+        my_list = []
+        my_quantity = []
+        my_colors = []
+        for p in products:
+            for key, value in p.items():
+                if key == 'id':
+                    pro_obj = Product.objects.get(pk=value)
+                    my_list.append(pro_obj)
+
+        for p in products:
+            for key, value in p.items():
+                if key == 'quantity':
+                    my_quantity.append(value)
+
+        for p in products:
+            for key, value in p.items():
+                if key == 'colors':
+                    my_colors.append(value)
+                    print(value)
+
+        return Response({'message': products}, status=status.HTTP_201_CREATED)
+
+
+class ProfileView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        try:
+            user_obj = CustomUser.objects.get(username=request.user)
+        except CustomUser.DoesNotExist:
+            return Response({'message': 'User not exist!'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProfileSerializer(user_obj)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if not request.data['password']:
+            return Response({'message': 'Please provide new Password'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not re.fullmatch(r'[A-Za-z0-9@#$%^&+=]{8,}', request.data.get('password')):
+            return Response({'message': 'Please provide strong password'}, status=status.HTTP_400_BAD_REQUEST)
+
+        password = request.data['password']
+
+        user_obj = CustomUser.objects.filter(username=request.user).first()
+        user_obj.password = make_password(password)
+        user_obj.save()
+        return Response({'message': 'Password updated Successfully'}, status=status.HTTP_200_OK)
+
+
+def user_activate_account(request, uid, token):
+    context = {
+        'uid': uid,
+        'token': token
+    }
+    return render(request, 'user_activate_account.html', context=context)
+
+
+def user_activate_account_succcess(request):
+    return render(request, 'user_activate_account_succcess.html')
+
+
+def reset_user_password(request, uid, token):
+    context = {
+        'uid': uid,
+        'token': token
+    }
+    return render(request, 'reset_user_password.html', context=context)
+
+
+def reset_password_success(request):
+    return render(request, 'password_done.html')
+
+
+class AddToCartView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        # get prdouct id from requested url
+        product_id = request.data.get('pro_id')
+
+        #  then get product
+        product_obj = Product.objects.get(id=product_id)
+
+        # check if cart exists
+        cart_id = Cart.objects.filter(customer=request.user).last()
+
+        if cart_id:
+            cart_obj = Cart.objects.get(id=cart_id.pk)
+            this_product_in_cart = cart_obj.cartproduct_set.filter(
+                product=product_obj)
+
+        #     # item already exists in cart
+            if this_product_in_cart.exists():
+                cartproduct = this_product_in_cart.last()
+                cartproduct.quantity += 1
+                cartproduct.subtotal += product_obj.selling_price
+                cartproduct.save()
+                cart_obj.total += product_obj.selling_price
+                cart_obj.save()
+
+        #     # new item is added in cart
+            else:
+                cartproduct = CartProduct.objects.create(cart=cart_obj,
+                                                         product=product_obj,
+                                                         rate=product_obj.selling_price,
+                                                         quantity=1,
+                                                         subtotal=product_obj.selling_price
+                                                         )
+                cart_obj.total += product_obj.selling_price
+                cart_obj.save()
+
+
+        # If cart does not exist in the database
+        else:
+            cart_obj = Cart.objects.create(total=0, customer=request.user)
+            # self.request.session['cart_id'] = cart_obj.id
+
+            cartproduct = CartProduct.objects.create(cart=cart_obj,
+                                                     product=product_obj,
+                                                     rate=product_obj.selling_price,
+                                                     quantity=1,
+                                                     subtotal=product_obj.selling_price
+                                                     )
+            cart_obj.total += product_obj.selling_price
+            cart_obj.save()
+
+        return Response({'message': 'product added to cart successfully'}, status=status.HTTP_201_CREATED)
+
+
+class ComplaintCreateView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request):
+        user = request.user
+        text = request.data.get('text', '')
+
+        Complaint.objects.create(user=user, text=text).save()
+        return Response({'message': 'your complaint created successfully'}, status=status.HTTP_201_CREATED)
+
+
+
+def index(request):
+    return render(request, 'homepage.html')

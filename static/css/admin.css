@@ -1,0 +1,80 @@
+#header {
+  background: rgba(223, 50, 50, 0.809);
+  color: #fff;
+}
+
+#branding h1 {
+  color: #fff;
+}
+
+/* a:link,
+a:visited {
+  color: #030c1a;
+} */
+
+div.breadcrumbs {
+  background: #30caa0;
+  color: #10284e;
+}
+
+div.breadcrumbs a {
+  color: #333;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+  background: rgba(223, 50, 50, 0.809);
+}
+
+.module h2 {
+  margin: 0;
+  padding: 8px;
+  font-weight: 500;
+  font-size: 17px;
+  text-align: center;
+}
+
+.readonly {
+  font-size: 15px;
+}
+
+.button,
+input[type="submit"],
+input[type="button"],
+.submit-row input,
+a.button {
+  background: #10284e;
+  color: #fff;
+}
+
+#id_discount {
+  background-color: #30caa0;
+  color: black;
+}
+#id_order_status {
+  background-color: #30caa0;
+  color: black;
+}
+
+.form-row {
+  display: flex;
+  overflow: hidden;
+  padding: 10px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--hairline-color);
+  align-items: center;
+  justify-content: center;
+}
+/* 
+thead {
+  background-color: #97bfff;
+}
+tr:nth-child(odd),
+.row-form-errors {
+  background: #ffd0d0;
+}
+tr:nth-child(even),
+.row-form-errors {
+  background: #f5efef;
+} */

@@ -1,0 +1,19 @@
+{% extends 'admin/base.html' %} {% load static %}
+<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}" />
+
+{% block branding %}
+<h1 id="head">
+  <img
+    src="{% static 'img/rido.jpg' %}"
+    alt="logo"
+    class="brand_img"
+    height="60"
+    width="60"
+    style="border-radius: 100%"
+  />
+  Rido Admin
+</h1>
+{% endblock %} {% block extrastyle %}
+<link rel="stylesheet" href="{% static 'css/admin.css' %}" />
+{% endblock %}
+<!-- src="https://res.cloudinary.com/abbas-orgs/image/upload/v1665125837/mall/users/2022/10/05/rido_mjudfb.jpg" -->

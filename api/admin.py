@@ -46,11 +46,11 @@ class UserAdminConfig(UserAdmin):
     list_filter = ('is_staff', 'start_date')
     ordering = ('-start_date',)
     list_per_page = 10
-    list_display = ('phone', 'username', 'is_active',
+    list_display = ('phone', 'username','is_superuser', 'is_active',
                     'is_staff', 'id', 'shop_name')
     fieldsets = (
         (None, {'fields': ('phone', 'username', 'email')}),
-        ('الصلاحيات', {'fields': ('is_staff', 'is_superuser',
+        ('الصلاحيات', {'fields': ('is_staff', 'is_superuser', 'is_active',
                                     'groups', 'user_permissions')}),
         ('معلومات المحل', {'fields': ('shop_name', 'image', 'shop_discription')}),
         ('معلومات الزبون', {

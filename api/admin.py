@@ -50,10 +50,10 @@ class UserAdminConfig(UserAdmin):
                     'is_staff', 'id', 'shop_name')
     fieldsets = (
         (None, {'fields': ('phone', 'username', 'email')}),
-        ('Permissions', {'fields': ('is_staff', 'is_superuser',
+        ('الصلاحيات', {'fields': ('is_staff', 'is_superuser',
                                     'groups', 'user_permissions')}),
-        ('Shop Info', {'fields': ('shop_name', 'image', 'shop_discription')}),
-        ('Customer Info', {
+        ('معلومات المحل', {'fields': ('shop_name', 'image', 'shop_discription')}),
+        ('معلومات الزبون', {
          'fields': ('first_name', 'last_name', 'points')})
     )
 

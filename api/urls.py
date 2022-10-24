@@ -10,6 +10,8 @@ urlpatterns = [
     # Products
     path('', index, name='homepage'),
     path('products/', ListProductView.as_view()),
+    path('products/<str:query>/', SearchProductView.as_view()),
+
     path('products/shop/<str:name>', ListProductByShopName.as_view()),
     path('products/view_count', ListProductByViewCountName.as_view()),
     path('products/<int:pk>', DetailProductView.as_view()),

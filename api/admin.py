@@ -46,13 +46,14 @@ class UserAdminConfig(UserAdmin):
     list_filter = ('is_staff', 'start_date')
     ordering = ('-start_date',)
     list_per_page = 10
-    list_display = ('phone', 'username','is_superuser', 'is_active',
+    list_display = ('phone', 'username', 'is_superuser', 'is_active',
                     'is_staff', 'id', 'shop_name')
     fieldsets = (
         (None, {'fields': ('phone', 'username', 'email')}),
         ('الصلاحيات', {'fields': ('is_staff', 'is_superuser', 'is_active',
-                                    'groups', 'user_permissions')}),
-        ('معلومات المحل', {'fields': ('shop_name', 'image', 'shop_discription')}),
+                                  'groups', 'user_permissions')}),
+        ('معلومات المحل', {
+         'fields': ('shop_name', 'image', 'shop_discription')}),
         ('معلومات الزبون', {
          'fields': ('first_name', 'last_name', 'points')})
     )
@@ -121,8 +122,8 @@ class OrderAdmin(ModelAdmin):
 
     readonly_fields = ['owner', 'user_name', 'product', 'mobile', 'email', 'since',
                        'total', 'total_after_discount', 'created_at', 'lon', 'lat', 'message', 'points', 'user_phone', 'quantity_of_product_ordered', 'product_ordered', 'full_name', 'shop']
-    list_display = ['view', 'points', 'order_status', 'created_at',
-                    'products_counts', 'user_phone', 'discount', 'total', 'total_after_discount', 'email']
+    list_display = ['view', 'since', 'order_status',  'products_counts',
+                    'discount', 'total', 'total_after_discount', 'created_at', 'email', 'points', 'user_phone']
     ordering = ['-id']
     search_fields = ('product__title',)
     list_filter = ['order_status', 'discount', 'created_at']
@@ -221,9 +222,11 @@ class ColorAdmin(admin.ModelAdmin):
     list_display = ['color_name', 'the_color']
     list_per_page = 20
 
+
 class SizeAdmin(admin.ModelAdmin):
     list_display = ['size_name']
     list_per_page = 20
+
 
 admin.site.register(CustomUser, UserAdminConfig)
 

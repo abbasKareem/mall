@@ -1,3 +1,4 @@
+from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.decorators import (api_view, permission_classes,
                                        renderer_classes)
@@ -55,19 +56,30 @@ class ListProductView(generics.ListCreateAPIView):
         # return self.get_paginated_response(data=serializer.data)
 
 
-class ListProductByShopName(generics.ListAPIView):
+class SearchProductView(APIView, LimitOffsetPagination):
+    product_serializer = AllProductSerializer
+
+    def get(self, request, query):
+        products = Product.productobjects.filter(title__icontains=query)
+        result = self.paginate_queryset(products, request)
+        serializer = self.product_serializer(result, many=True)
+        return self.get_paginated_response(serializer.data)
+
+
+class ListProductByShopName(APIView, LimitOffsetPagination):
     queryset = Product.productobjects.all()
-    serializer_class = ProductSerializer
+    serializer_class = AllProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def list(self, request, name=None):
+    def get(self, request, name=None):
+
         shop_exist = CustomUser.objects.filter(shop_name=name).first()
         if shop_exist:
             products = Product.productobjects.filter(
                 user__shop_name=name).order_by('-id')
-            serializer = ProductSerializer(products, many=True)
-            return Response(serializer.data)
-            # self.get_paginated_response(serializer.data)
+            result = self.paginate_queryset(products, request)
+            serializer = self.serializer_class(result, many=True)
+            return self.get_paginated_response(serializer.data)
         else:
             return Response({'message': 'Shop Not Found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -169,16 +181,17 @@ class ListCategoryView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
-class ListProductsByCategoryIdView(generics.ListAPIView):
+class ListProductsByCategoryIdView(APIView, LimitOffsetPagination):
     queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+    serializer_class = AllProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def list(self, request, pk=None):
-        products = Product.productobjects.filter(category=pk)
+    def get(self, request, pk=None):
+        products = Product.productobjects.filter(category=pk).order_by('-id')
         if products:
-            serializer = ProductSerializer(products, many=True)
-            return Response(serializer.data)
+            result = self.paginate_queryset(products, request)
+            serializer = self.serializer_class(result, many=True)
+            return self.get_paginated_response(serializer.data)
         else:
             return Response({'message': 'Not valid category id'})
 
@@ -251,12 +264,11 @@ class OrderCreateView(generics.CreateAPIView):
 
             total_test = 0
 
-
             for value in PRODUCTS_IDS:
                 try:
                     product_obj = Product.objects.get(id=value)
                 except Product.DoesNotExist:
-                    return Response({'message': 'Erorr: Product with this id not found'}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({'message': f"Erorr: Product of id number {value} not found"}, status=status.HTTP_404_NOT_FOUND)
                 if product_obj.user.shop_name != shop_obj.shop_name:
                     error_messsage = f"Error: The [{product_obj.title}] Does not belong to this shop, try again"
                     return Response({'message': error_messsage}, status=status.HTTP_404_NOT_FOUND)
@@ -268,7 +280,7 @@ class OrderCreateView(generics.CreateAPIView):
                 counter += 1
                 PRODUCTS_OBJECTS.append(product_order_obj)
             order = Order.objects.create(ordered_by=ordered_by, owner=shop_obj, email=request.user.email, mobile=request.user.phone,
-                                        total=total_test, order_status='Order Recevied', lat=lat, lon=lon, message=message, discount='No Discound')
+                                         total=total_test, order_status='Order Recevied', lat=lat, lon=lon, message=message, discount='No Discound')
             order.save_base()
             for p in PRODUCTS_OBJECTS:
                 order.product.add(p)
@@ -280,13 +292,12 @@ class OrderCreateView(generics.CreateAPIView):
                 qua += q
             print(total_test)
 
-
             user.points += qua * 10
             user.save()
 
             return Response({'message': 'Order Created Successfully'}, status=status.HTTP_201_CREATED)
         except CustomUser.DoesNotExist:
-             return Response({'message': "Error: No shop found with this name"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message': "Error: No shop found with this name"}, status=status.HTTP_404_NOT_FOUND)
 
 # =================Orders============
 
@@ -569,7 +580,6 @@ class AddToCartView(generics.ListCreateAPIView):
                 cart_obj.total += product_obj.selling_price
                 cart_obj.save()
 
-
         # If cart does not exist in the database
         else:
             cart_obj = Cart.objects.create(total=0, customer=request.user)
@@ -596,7 +606,6 @@ class ComplaintCreateView(generics.CreateAPIView):
 
         Complaint.objects.create(user=user, text=text).save()
         return Response({'message': 'your complaint created successfully'}, status=status.HTTP_201_CREATED)
-
 
 
 def index(request):

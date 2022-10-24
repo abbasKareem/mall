@@ -228,30 +228,28 @@ WSGI_APPLICATION = 'cfehome.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-import os
 # os.environ.get('secert_ky')
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'auth_system',
-#         'USER': 'postgres',
-#         'PASSWORD': 'abbas',
-#         'HOST': '127.0.0.1',
-#         'PORT': '5432',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'malldb_ajqj',
-        'USER': 'abbas',
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST':  os.environ.get('DB_URL'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'auth_system',
+        'USER': 'postgres',
+        'PASSWORD': 'abbas',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'malldb_ajqj',
+#         'USER': 'abbas',
+#         'PASSWORD': os.environ.get('DB_PASSWORD'),
+#         'HOST':  os.environ.get('DB_URL'),
+#         'PORT': '5432',
+#     }
+# }
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -287,7 +285,6 @@ TIME_ZONE = 'Asia/Baghdad'
 USE_I18N = True
 
 USE_TZ = True
-
 
 
 MEDIA_URL = '/mall/'
@@ -395,8 +392,6 @@ JAZZMIN_UI_TWEAKS = {
 JAZZMIN_UI_TWEAKS["dark_mode_theme"]
 
 JAZZMIN_SETTINGS["show_ui_builder"] = True
-
-
 
 
 DJOSER = {

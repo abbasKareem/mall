@@ -21,6 +21,8 @@ urlpatterns = [
 
     # Shops
     path('shops/', ListAllShopView.as_view()),
+    path('state/', AllStateView.as_view()),
+    path('state/shop/<str:name>', ListShopsByStateNameView.as_view()),
 
     # WishList
     path('wishlist/create', WishListCreateView.as_view()),

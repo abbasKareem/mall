@@ -199,3 +199,15 @@ class ProfileSerializer(ModelSerializer):
         model = CustomUser
         exclude = ['password', 'image', 'last_login', 'shop_discription', 'is_staff',
                    'is_superuser', 'shop_name', 'groups', 'user_permissions']
+
+
+class AllStateSerializer(ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['state']
+
+
+class AllShopsByStateSerializer(ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['shop_name', 'shop_discription', 'image']

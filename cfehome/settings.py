@@ -226,9 +226,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cfehome.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-# os.environ.get('secert_ky')
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',

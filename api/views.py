@@ -319,6 +319,36 @@ class ListAllShopView(generics.ListAPIView):
         'username', 'shop_discription', 'image', 'phone')
     serializer_class = ListAllShopSerializer
 
+
+class AllStateView(APIView, LimitOffsetPagination):
+    serializer_class = AllStateSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        qs = CustomUser.objects.filter(is_staff=True).exclude(
+            shop_name__isnull=True).only('state')
+        result = self.paginate_queryset(qs, request)
+        serializer = self.serializer_class(result, many=True)
+        return self.get_paginated_response(serializer.data)
+
+
+class ListShopsByStateNameView(APIView, LimitOffsetPagination):
+    # queryset = Product.productobjects.all()
+    serializer_class = ListAllShopSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request, name=None):
+        state_exist = CustomUser.objects.filter(state=name).first()
+        if state_exist:
+            shops = CustomUser.objects.filter(state=name).only(
+                'shop_name', 'shop_discription', 'image')
+            result = self.paginate_queryset(shops, request)
+            serializer = self.serializer_class(result, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            return Response({'message': 'State Not Found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 # =================Shops============
 
 

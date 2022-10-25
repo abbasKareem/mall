@@ -43,20 +43,23 @@ class UserAdminConfig(UserAdmin):
     model = CustomUser
     readonly_fields = ['points']
     search_fields = ('phone', 'username')
-    list_filter = ('is_staff', 'start_date')
+    list_filter = ('is_staff', 'start_date', 'state')
     ordering = ('-start_date',)
     list_per_page = 10
     list_display = ('phone', 'username', 'is_superuser', 'is_active',
-                    'is_staff', 'id', 'shop_name')
+                    'is_staff', 'shop_name', 'state')
     fieldsets = (
         (None, {'fields': ('phone', 'username', 'email')}),
         ('الصلاحيات', {'fields': ('is_staff', 'is_superuser', 'is_active',
                                   'groups', 'user_permissions')}),
         ('معلومات المحل', {
-         'fields': ('shop_name', 'image', 'shop_discription')}),
+         'fields': ('shop_name', 'image', 'shop_discription', 'state')}),
         ('معلومات الزبون', {
          'fields': ('first_name', 'last_name', 'points')})
     )
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
     add_fieldsets = (
         (None, {
@@ -68,7 +71,7 @@ class UserAdminConfig(UserAdmin):
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['the_image', 'title', 'price', 'selling_price',
-                    'category', 'view_count', 'is_public', 'quantity', 'shop', 'colors', 'sizes', 'id']
+                    'category', 'view_count', 'is_public', 'quantity', 'shop', 'colors', 'sizes']
     # list_editable = ['is_public', 'price']
     ordering = ['-id']
     search_fields = ('title',)
@@ -110,6 +113,9 @@ class OrderAdmin(ModelAdmin):
     geomap_default_longitude = "44.03287850414396"
     geomap_default_latitude = "32.616430004635404"
     # geomap_height = "300px"
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
     fieldsets = (
         ('اسم المحل', {'fields': ('shop',)}),
@@ -202,9 +208,12 @@ class ProductReviewAdmin(admin.ModelAdmin):
 
     list_filter = ['review_rating']
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 class WishListAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user']
+    list_display = ['user']
 
 
 class ProductOrderAdmin(admin.ModelAdmin):
@@ -216,6 +225,9 @@ class ComplaintAdmin(admin.ModelAdmin):
     list_display = ['user', 'created_at']
     list_filter = ['created_at']
     list_per_page = 10
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 class ColorAdmin(admin.ModelAdmin):

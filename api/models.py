@@ -51,6 +51,27 @@ class CustomAccountManager(BaseUserManager):
         return user
 
 
+STATES = (
+    ("بغداد", "بغداد"),
+    ("الانبار", "الانبار"),
+    ("بابل", "بابل"),
+    ("بصرة", "بصرة"),
+    ("ذي قار", "ذي قار"),
+    ("ديالى", "ديالى"),
+    ("دهوك", "دهوك"),
+    ("اربيل", "اربيل"),
+    ("كربلاء", "كربلاء"),
+    ("كركوك", "كركوك"),
+    ("ميسان", "ميسان"),
+    ("المثنى", "المثنى"),
+    ("النجف", "النجف"),
+    ("الموصل", "الموصل"),
+    ("صلاح الدين", "صلاح الدين"),
+    ("سليمانية", "سليمانية"),
+    ("واسط", "واسط"),
+)
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
         max_length=100, unique=True, default='test@gmail.com')
@@ -62,6 +83,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     image = models.ImageField(
         upload_to="users/%Y/%m/%d/", blank=True, null=True)
     shop_discription = models.TextField(blank=True, null=True)
+    state = models.CharField(max_length=20, null=True,
+                             blank=True, choices=STATES, default=STATES[0])
 
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -125,11 +148,9 @@ class Color(models.Model):
         verbose_name = 'اللون'
         verbose_name_plural = 'الالوان'
 
-    
     def the_color(self):
         string_my = f"<div style='width: 30px; height: 30px; background-color: {self.color_code};border-radius: 50%;'></div>"
         return mark_safe(string_my)
-
 
 
 class Product(models.Model):

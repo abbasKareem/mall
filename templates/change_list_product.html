@@ -1,83 +1,74 @@
 {% extends "admin/change_list.html" %}
 {% load static %}
   {% block extrahead%}
-<link
-  rel="stylesheet"
-  type="text/css"
-  href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-/>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.min.js"></script>
-<script>
-  var randomColorGenerator = function () {
-      return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
-  };
-  var options = {
-      responsive: true,
-      maintainAspectRatio: true,
-      legend: {
-          position: 'left'
-      },
-      title: {
-          display: true
-      },
-      animation: {
-          animateScale: true,
-          animateRotate: true
-      }
-  };
-  window.onload = function () {
-      var ctx = document.getElementById("gender-chart");
-      {% regroup cl.queryset|dictsort:"is_public" by get_is_public_display as public_list %}
-      var lineChart = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-              labels: [{% for public in public_list %}'{{ public.grouper }}',{% endfor %}],
-              datasets: [{
-                  data: [{% for public in public_list %}'{{ public.list|length }}',{% endfor %}],
-                  backgroundColor: [{% for public in public_list %}randomColorGenerator(),{% endfor %}]
-              }]
-          },
-          options: options
-      });
-      ctx = document.getElementById("language-chart");
-      {% regroup cl.queryset|dictsort:"size" by get_size_display as size_list %}
-      lineChart = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-              labels: [{% for size in size_list %}'{{ size.grouper }}',{% endfor %}],
-              datasets: [{
-                  data: [{% for size in size_list %}'{{ size.list|length }}',{% endfor %}],
-                  backgroundColor: [{% for size in size_list %}randomColorGenerator(),{% endfor %}]
-              }]
-          }, options: options
-      });
-      ctx = document.getElementById("grades-chart");
-      {% regroup cl.queryset|dictsort:"language" by get_language_display as language_list %}
-      lineChart = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-              labels: [{% for language in language_list %}'{{ language.grouper }}',{% endfor %}],
-              datasets: [{
-                  data: [{% for language in language_list %}'{{ language.list|length }}',{% endfor %}],
-                  backgroundColor: [{% for language` in language_list %}randomColorGenerator(),{% endfor %}]
-              }]
-          }, options: options
-      });
-  }
+<head>
+      <!-- <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<!-- This is the script providing runtime support for compiled `async`/`await` code -->
+<!-- <script src="https://unpkg.com/regenerator-runtime@0.13.2/runtime.js"></script> -->
+<!-- This is what supports JSX compilation (and other transformations) -->
+<!-- <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js"></script> --> -->
+
+</head>
+
+<!-- <script>
+    const mainContainer = {
+        
+        backgroundColor: 'gray'
+    }
+    const myStyle = {
+        // backgroundColor: 'red'
+    }
 </script>
+
+
+<script type="text/babel" data-presets="es2017,react,stage-3">
+    const  {useEffect, useState} = React;
+    const MainContent = () => {
+        const [prodcuts, setProdcuts] = useState([])
+        const [inc, setInc] = useState(0)
+        // const myStyle = {
+        //     backgroundColor: 'red'
+        // }
+        useEffect(() => {
+            const fetchProducts = async() => {
+                let headers = new Headers();
+
+            headers.append('Content-Type', 'application/json');
+            headers.append('Accept', 'application/json');
+
+            headers.append("Access-Control-Allow-Origin" ,"*")
+        
+                const res = await fetch('http://ridoapp.onrender.com/products/', {headers: headers})
+                const data = await res.json()
+                setProdcuts(data.results)
+            }
+            fetchProducts()
+           
+        }, [])
+        return (
+            <div style={mainContainer}>
+                <button onClick={()=> setInc(pr => pr + 1)} >Click</button>
+                <h1 style={myStyle} >{inc}</h1>
+                <div>
+                    {prodcuts.map(pro => (
+                        <div key={pro.id} >
+                            <h1 >{pro.title}</h1>
+                        </div>
+                    ))}
+                    </div>
+             
+            </div>
+        )
+    }
+    ReactDOM.render(<MainContent />, document.getElementById('main-content'))
+
+</script> -->
 {% endblock %} {% block content %}
-<h1>Graphs</h1>
-<hr />
-<div class="row">
-  <div class="col-sm-4">
-    <canvas id="gender-chart" style="width: 100px !important"></canvas>
-  </div>
-  <div class="col-sm-4">
-    <canvas id="language-chart" style="width: 100px !important"></canvas>
-  </div>
-  <div class="col-sm-4">
-    <canvas id="grades-chart" style="width: 100px !important"></canvas>
-  </div>
-</div>
-{{ block.super }} {% endblock %}
+<!-- 
+<div id="main-content"></div> -->
+
+{{ block.super }}
+ {% endblock %}

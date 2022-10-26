@@ -1,74 +1,76 @@
-{% extends "admin/change_list.html" %}
-{% load static %}
-  {% block extrahead%}
+{% extends "admin/change_list.html" %} {% load static %} {% block extrahead%}
 <head>
-      <!-- <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+  <link
+    href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css"
+    rel="stylesheet"
+  />
   <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<!-- This is the script providing runtime support for compiled `async`/`await` code -->
-<!-- <script src="https://unpkg.com/regenerator-runtime@0.13.2/runtime.js"></script> -->
-<!-- This is what supports JSX compilation (and other transformations) -->
-<!-- <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js"></script> --> -->
-
+  <script
+    crossorigin
+    src="https://unpkg.com/react@18/umd/react.production.min.js"
+  ></script>
+  <script
+    crossorigin
+    src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+  ></script>
+  <!-- This is the script providing runtime support for compiled `async`/`await` code -->
+  <script src="https://unpkg.com/regenerator-runtime@0.13.2/runtime.js"></script>
+  This is what supports JSX compilation (and other transformations)
+  <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js"></script>
 </head>
 
-<!-- <script>
-    const mainContainer = {
-        
-        backgroundColor: 'gray'
-    }
-    const myStyle = {
-        // backgroundColor: 'red'
-    }
+<script>
+  const mainContainer = {
+    backgroundColor: "white",
+  }
+  const myStyle = {
+    // backgroundColor: 'red'
+  }
 </script>
 
-
 <script type="text/babel" data-presets="es2017,react,stage-3">
-    const  {useEffect, useState} = React;
-    const MainContent = () => {
-        const [prodcuts, setProdcuts] = useState([])
-        const [inc, setInc] = useState(0)
-        // const myStyle = {
-        //     backgroundColor: 'red'
-        // }
-        useEffect(() => {
-            const fetchProducts = async() => {
-                let headers = new Headers();
-
-            headers.append('Content-Type', 'application/json');
-            headers.append('Accept', 'application/json');
-
-            headers.append("Access-Control-Allow-Origin" ,"*")
-        
-                const res = await fetch('http://ridoapp.onrender.com/products/', {headers: headers})
-                const data = await res.json()
-                setProdcuts(data.results)
-            }
-            fetchProducts()
-           
-        }, [])
-        return (
-            <div style={mainContainer}>
-                <button onClick={()=> setInc(pr => pr + 1)} >Click</button>
-                <h1 style={myStyle} >{inc}</h1>
-                <div>
-                    {prodcuts.map(pro => (
-                        <div key={pro.id} >
-                            <h1 >{pro.title}</h1>
-                        </div>
-                    ))}
-                    </div>
-             
-            </div>
-        )
+  const { useEffect, useState } = React
+  const MainContent = () => {
+    const [prodcuts, setProdcuts] = useState([])
+    const [inc, setInc] = useState(0)
+    const myStyle = {
+      backgroundColor: "pink",
     }
-    ReactDOM.render(<MainContent />, document.getElementById('main-content'))
+    useEffect(() => {
+      const fetchProducts = async () => {
+        let headers = new Headers()
 
-</script> -->
+        headers.append("Content-Type", "application/json")
+        headers.append("Accept", "application/json")
+
+        headers.append("Access-Control-Allow-Origin", "*")
+
+        const res = await fetch("http://ridoapp.onrender.com/products/", {
+          headers: headers,
+        })
+        const data = await res.json()
+        setProdcuts(data.results)
+      }
+      fetchProducts()
+    }, [])
+    return (
+      <div style={mainContainer}>
+        <button onClick={() => setInc((pr) => pr + 1)}>Click</button>
+        <h1 style={myStyle}>{inc}</h1>
+        <div>
+          {prodcuts.map((pro) => (
+            <div key={pro.id}>
+              <h1>{pro.title}</h1>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  ReactDOM.render(<MainContent />, document.getElementById("main-content"))
+</script>
 {% endblock %} {% block content %}
-<!-- 
-<div id="main-content"></div> -->
 
-{{ block.super }}
- {% endblock %}
+<div id="main-content"></div>
+
+{{ block.super }} {% endblock %}

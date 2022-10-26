@@ -79,7 +79,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     filter_horizontal = ['color', 'size']
 
-    # change_list_template = 'change_list_product.html'
+    change_list_template = 'change_list_product.html'
     # change_form_template = 'change_form.html'
 
     readonly_fields = ['view_count']

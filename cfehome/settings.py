@@ -82,6 +82,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'cfehome.wsgi.application'
+# ASGI_APPLICATION = 'cfehome.asgi.application'
 
 
 # DATABASES = {
@@ -226,5 +227,12 @@ DJOSER = {
         'user': 'api.serializers.UserCreateSerializer',
         'current_user': 'api.serializers.UserCreateSerializer',
         'user_delete': 'djoser.serializers.UserDeleteSerializer',
+    }
+}
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }

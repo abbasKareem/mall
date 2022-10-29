@@ -4,7 +4,7 @@ from django_admin_geomap import ModelAdmin
 from django.utils.html import format_html
 from django.urls import reverse
 from datetime import datetime, timezone
-
+from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 from django.conf import settings
 from django.http import HttpResponse
@@ -58,6 +58,9 @@ class UserAdminConfig(UserAdmin):
          'fields': ('first_name', 'last_name', 'points')})
     )
 
+    view_on_site = False
+    admin.site.site_url = None
+
     def has_add_permission(self, request, obj=None):
         return False
 
@@ -79,11 +82,12 @@ class ProductAdmin(admin.ModelAdmin):
 
     filter_horizontal = ['color', 'size']
 
-    change_list_template = 'change_list_product.html'
+    # change_list_template = 'change_list_product.html'
     # change_form_template = 'change_form.html'
 
     readonly_fields = ['view_count']
     list_per_page = 10
+    view_on_site = False
 
     def shop(self, obj):
         return obj.user.shop_name
@@ -101,9 +105,12 @@ class ProductAdmin(admin.ModelAdmin):
         return qs.filter(user=request.user)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        print(request.user)
         if db_field.name == "user":
             kwargs["queryset"] = CustomUser.objects.filter(
                 username=request.user.username)
+            # kwargs["queryset"] = request.user
+
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -114,6 +121,8 @@ class OrderAdmin(ModelAdmin):
     geomap_default_latitude = "32.616430004635404"
     # geomap_height = "300px"
 
+    view_on_site = False
+
     def has_add_permission(self, request, obj=None):
         return False
 
@@ -123,7 +132,7 @@ class OrderAdmin(ModelAdmin):
         ('معلومات الزبون', {'fields': ('points', 'email',
          'user_phone',   'user_name', 'full_name')}),
         ('معلومات الطلب', {'fields': ('quantity_of_product_ordered',
-         'product_ordered', 'since', 'total', 'total_after_discount', 'message')}),
+         'product_ordered','created_at', 'total', 'total_after_discount', 'message')}),
     )
 
     readonly_fields = ['owner', 'user_name', 'product', 'mobile', 'email', 'since',
@@ -138,6 +147,12 @@ class OrderAdmin(ModelAdmin):
     # change_list_template = 'change_list_order.html'
 
     # actions = [export_as_csv]
+    # def message_user(self, *args):
+    #     pass
+
+    # def save_model(self, request, obj, form, change):
+    #     messages.add_message(request, messages.INFO, 'order created')
+    #     super(OrderAdmin, self).save_model(request, obj, form, change)
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -166,7 +181,7 @@ class OrderAdmin(ModelAdmin):
 
     def since(self, obj):
         date_time_dif = datetime.now(timezone.utc) - obj.created_at
-        return str(date_time_dif)[:-6] + ' ago'
+        return str(date_time_dif)[:-6] 
 
     def points(self, obj):
         return obj.ordered_by.points
@@ -208,6 +223,8 @@ class ProductReviewAdmin(admin.ModelAdmin):
 
     list_filter = ['review_rating']
 
+    view_on_site = False
+
     def has_add_permission(self, request, obj=None):
         return False
 
@@ -234,10 +251,28 @@ class ColorAdmin(admin.ModelAdmin):
     list_display = ['color_name', 'the_color']
     list_per_page = 20
 
+    change_list_template = 'change_list_color.html'
+
+    view_on_site = False
+
 
 class SizeAdmin(admin.ModelAdmin):
     list_display = ['size_name']
     list_per_page = 20
+
+    view_on_site = False
+
+    change_list_template = 'change_list_size.html'
+
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['title']
+    list_per_page = 20
+    view_on_site = False
+
+    change_list_template = 'change_list_category.html'
+
 
 
 admin.site.register(CustomUser, UserAdminConfig)
@@ -249,5 +284,5 @@ admin.site.register(Color, ColorAdmin)
 admin.site.register(ProductReview, ProductReviewAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Order, OrderAdmin)
-admin.site.register(Category)
+admin.site.register(Category, CategoryAdmin)
 # admin.site.register(WishList, WishListAdmin)

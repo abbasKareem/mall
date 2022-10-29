@@ -17,9 +17,12 @@
   <script src="https://unpkg.com/regenerator-runtime@0.13.2/runtime.js"></script>
   This is what supports JSX compilation (and other transformations)
   <script src="https://unpkg.com/@babel/standalone@7.10.3/babel.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
 
 <script>
+
+  
   const mainContainer = {
     backgroundColor: "white",
   }
@@ -29,7 +32,8 @@
 </script>
 
 <script type="text/babel" data-presets="es2017,react,stage-3">
-  const { useEffect, useState } = React
+  const { useEffect, useState } = React;
+  
   const MainContent = () => {
     const [prodcuts, setProdcuts] = useState([])
     const [inc, setInc] = useState(0)
@@ -45,9 +49,7 @@
 
         headers.append("Access-Control-Allow-Origin", "*")
 
-        const res = await fetch("http://ridoapp.onrender.com/products/", {
-          headers: headers,
-        })
+        const res = await fetch("http://ridoapp.onrender.com/products/")
         const data = await res.json()
         setProdcuts(data.results)
       }

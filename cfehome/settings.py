@@ -9,6 +9,9 @@ SECRET_KEY = 'django-insecure-b$+sjos*--v-jc8jmq-llsl3+(&-!2hd458vis7w7wyr)@#_ja
 
 DEBUG = True
 
+MAX_OTP_TRY = 3
+
+MIN_PASSWORD_LENGTH = 8
 ALLOWED_HOSTS = ['*']
 
 
@@ -28,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     # 'django.contrib.sites',
+    'pwa',
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework_simplejwt',
@@ -88,7 +92,7 @@ WSGI_APPLICATION = 'cfehome.wsgi.application'
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'auth_system',
+#         'NAME': 'new_auth_system',
 #         'USER': 'postgres',
 #         'PASSWORD': 'abbas',
 #         'HOST': '127.0.0.1',
@@ -236,3 +240,35 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
+
+
+PWA_APP_NAME = 'Rido Admin'
+PWA_APP_DESCRIPTION = "Rido admin panal"
+PWA_APP_THEME_COLOR = '#79fa00'
+PWA_APP_BACKGROUND_COLOR = '#ffffff'
+PWA_APP_DISPLAY = 'standalone'
+PWA_APP_SCOPE = '/'
+PWA_APP_ORIENTATION = 'any'
+PWA_APP_START_URL = '/admin/'
+PWA_APP_STATUS_BAR_COLOR = 'default'
+PWA_APP_ICONS = [
+    {
+        'src': './static/img/rido.jpg',
+        'sizes': '160x160'
+    }
+]
+PWA_APP_ICONS_APPLE = [
+    {
+        'src': './static/img/rido.jpg',
+        'sizes': '160x160'
+    }
+]
+PWA_APP_SPLASH_SCREEN = [
+    {
+        'src': './static/img/rido.jpg',
+        'media': '(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)'
+    }
+]
+
+
+PWA_APP_DEBUG_MODE = False

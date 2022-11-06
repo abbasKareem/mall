@@ -14,6 +14,7 @@ urlpatterns = [
 
     path('products/shop/<str:name>', ListProductByShopName.as_view()),
     path('products/view_count', ListProductByViewCountName.as_view()),
+    path('products/must_diffrenece', MostDiscountView.as_view()),
     path('products/<int:pk>', DetailProductView.as_view()),
     path('products/price/low', LowProductView.as_view()),
     path('products/price/high', HighProductView.as_view()),
@@ -53,6 +54,7 @@ urlpatterns = [
 
     # profile
     path('api/user/me', ProfileView.as_view()),
+    path('api/user/me/full_name', SetFirstLastNameView.as_view()),
     path('api/user/me/change/password', ChangePasswordView.as_view()),
 
     path('activate/<str:uid>/<str:token>',

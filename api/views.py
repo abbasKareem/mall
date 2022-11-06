@@ -1,3 +1,11 @@
+from .utils import send_otp
+from rest_framework.decorators import action
+from django.utils import timezone
+from django.conf import settings
+import random
+import datetime
+from datetime import datetime, timedelta
+from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.decorators import (api_view, permission_classes,
@@ -10,7 +18,6 @@ import requests
 from rest_framework.parsers import BaseParser
 import re
 import base64
-import pprint
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
@@ -100,12 +107,10 @@ class DetailProductView(generics.RetrieveAPIView):
         except Product.DoesNotExist:
             return Response({'message': 'Product not found with this id'}, status=status.HTTP_404_NOT_FOUND)
         shop_name = product.user
-        print(shop_name.pk)
 
         related_products = Product.productobjects.filter(
             category=product.category, user=shop_name.pk).exclude(pk=pk)[:4]
 
-        # print(related_products.first().title)
         related_products_serializer = RelatedProductSerialzer(
             related_products, many=True)
 
@@ -156,7 +161,6 @@ class ProductReviewView(generics.CreateAPIView):
             return Response({'message': 'You already rating this product!'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = CustomUser.objects.get(id=request.user.pk)
-        print(request.user.pk)
 
         try:
             product = Product.objects.get(id=pk)
@@ -279,7 +283,7 @@ class OrderCreateView(generics.CreateAPIView):
                 total_test += product_obj.selling_price * QUANTITY[counter]
                 counter += 1
                 PRODUCTS_OBJECTS.append(product_order_obj)
-            order = Order.objects.create(ordered_by=ordered_by, owner=shop_obj, email=request.user.email, mobile=request.user.phone,
+            order = Order.objects.create(ordered_by=ordered_by, owner=shop_obj, email=request.user.email, mobile=request.user.phone_number,
                                          total=total_test, order_status='Order Recevied', lat=lat, lon=lon, message=message, discount='No Discound')
             order.save_base()
             for p in PRODUCTS_OBJECTS:
@@ -290,7 +294,6 @@ class OrderCreateView(generics.CreateAPIView):
             qua = 0
             for q in QUANTITY:
                 qua += q
-            print(total_test)
 
             user.points += qua * 10
             user.save()
@@ -316,7 +319,7 @@ class RegisterAPIView(generics.GenericAPIView):
 # =================Shops============
 class ListAllShopView(generics.ListAPIView):
     queryset = CustomUser.objects.filter(is_staff=True).exclude(shop_name__isnull=True).only(
-        'username', 'shop_discription', 'image', 'phone')
+        'username', 'shop_discription', 'image', 'phone_number')
     serializer_class = ListAllShopSerializer
 
 
@@ -373,7 +376,6 @@ class WishListCreateView(generics.CreateAPIView):
             wish_list.products.add(product)
             wish_list.save()
 
-        print(request.user)
         return Response({'message': 'Product added to your wishlist Successfully!'}, status=status.HTTP_201_CREATED)
 
 
@@ -511,7 +513,6 @@ class OrderCreateTestView(generics.CreateAPIView):
             for key, value in p.items():
                 if key == 'colors':
                     my_colors.append(value)
-                    print(value)
 
         return Response({'message': products}, status=status.HTTP_201_CREATED)
 
@@ -527,6 +528,25 @@ class ProfileView(generics.ListAPIView):
 
         serializer = ProfileSerializer(user_obj)
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SetFirstLastNameView(generics.CreateAPIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        first_name = request.data.get("first_name", "")
+        last_name = request.data.get("last_name", "")
+        try:
+            user_obj = CustomUser.objects.get(username=request.user)
+        except CustomUser.DoesNotExist:
+            return Response({'message': 'User not exist!'}, status=status.HTTP_404_NOT_FOUND)
+
+        user_obj.first_name = first_name
+        user_obj.last_name = last_name
+        user_obj.save()
+        serializer = ProfileSerializer(user_obj)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -640,3 +660,65 @@ class ComplaintCreateView(generics.CreateAPIView):
 
 def index(request):
     return render(request, 'homepage.html')
+
+
+class UserviewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializerOtp
+
+    @action(detail=True, methods=['PATCH'])
+    def verify_otp(self, request, pk=None):
+        instance = self.get_object()
+
+        if (
+            not instance.is_active
+            and instance.otp == request.data.get('otp')
+            and instance.otp_expiry
+            and timezone.now() < instance.otp_expiry
+        ):
+            instance.is_active = True
+            instance.otp_expiry = None
+            instance.max_otp_try = settings.MAX_OTP_TRY
+            instance.otp_max_out = None
+            instance.save()
+            return Response({"message": "Sucessfully verified the user"}, status=status.HTTP_200_OK)
+        return Response({"message": "User active or Please enter the correct OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["PATCH"])
+    def regenerate_otp(self, request, pk=None):
+        instance = self.get_object()
+        if int(instance.max_otp_try) == 0 and timezone.now() < instance.otp_max_out:
+            return Response({"message": "Max OTP try reached, try after an hour."}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp = random.randint(1000, 9999)
+        otp_expiry = timezone.now() + timedelta(minutes=10)
+        max_otp_try = int(instance.max_otp_try) - 1
+        instance.otp = otp
+        instance.otp_expiry = otp_expiry
+        instance.max_otp_try = max_otp_try
+
+        if max_otp_try == 0:
+            instance.otp_max_out = timezone.now() + timedelta(hours=1)
+        elif max_otp_try == -1:
+            instance.otp_max_out = settings.MAX_OTP_TRY
+        else:
+            instance.otp_max_out = None
+            instance.max_otp_try = max_otp_try
+        instance.save()
+        is_sent = send_otp(instance.phone_number, otp)
+        return Response({"message": "Successfully re-generated the new OTP"}, status=status.HTTP_201_CREATED)
+
+
+class MostDiscountView(APIView, LimitOffsetPagination):
+    queryset = Product.productobjects.all()
+    serializer_class = AllProductSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request, pk=None):
+        products = Product.productobjects.all().order_by('-diffrenece')[:20]
+        if products:
+            result = self.paginate_queryset(products, request)
+            serializer = self.serializer_class(result, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            return Response({'message': 'No product found'})

@@ -1,18 +1,59 @@
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-
+from datetime import datetime, timedelta
+import random
+from django.conf import settings
 from .models import *
-
+from .utils import send_otp
 
 from djoser.serializers import UserCreateSerializer
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+class UserSerializerOtp(serializers.ModelSerializer):
+    password1 = serializers.CharField(write_only=True, min_length=settings.MIN_PASSWORD_LENGTH, error_messages={
+        "min_length": f"Password must be longer than {settings.MIN_PASSWORD_LENGTH} characters"
+    })
+
+    password2 = serializers.CharField(
+        write_only=True,
+        min_length=settings.MIN_PASSWORD_LENGTH,
+        error_messages={
+            "min_length": f"Password must be longer than {settings.MIN_PASSWORD_LENGTH} characters"}
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ["id", "phone_number", "email",
+                  "username", "password1", "password2"]
+
+    def validate(self, data):
+        if data['password1'] != data['password2']:
+            raise serializers.ValidationError("Passwords do not match.")
+        return data
+
+    def create(self, validated_data):
+        otp = random.randint(1000, 9999)
+        otp_expiry = datetime.now() + timedelta(minutes=10)
+        user = CustomUser(
+            phone_number=validated_data["phone_number"],
+            email=validated_data["email"],
+            username=validated_data["username"],
+            otp=otp,
+            otp_expiry=otp_expiry,
+            max_otp_try=settings.MAX_OTP_TRY
+        )
+        user.set_password(validated_data['password1'])
+        user.save()
+        is_sent = send_otp(validated_data["phone_number"], otp)
+        return user
+
+
 class UserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'phone',  'first_name',
+        fields = ('id', 'email', 'phone_number',  'first_name',
                   'last_name', 'password')
 
 
@@ -162,7 +203,7 @@ class ProductReviewSerializer(serializers.ModelSerializer):
 class ListAllShopSerializer(ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['shop_name', 'shop_discription', 'image', 'phone']
+        fields = ['shop_name', 'shop_discription', 'image', 'phone_number']
 
 
 class WishListProductSerializer(ModelSerializer):
@@ -198,7 +239,7 @@ class ProfileSerializer(ModelSerializer):
     class Meta:
         model = CustomUser
         exclude = ['password', 'image', 'last_login', 'shop_discription', 'is_staff',
-                   'is_superuser', 'shop_name', 'groups', 'user_permissions']
+                   'is_superuser', 'shop_name', 'groups', 'user_permissions', 'otp_expiry', 'otp_max_out', 'max_otp_try', 'state',  'otp']
 
 
 class AllStateSerializer(ModelSerializer):

@@ -1,3 +1,7 @@
+from django_admin_geomap import GeoItem
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+from colorfield.fields import ColorField
 from django.db import models
 from django.utils.html import mark_safe
 from django.utils import timezone
@@ -5,51 +9,50 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.conf import settings
 from decimal import Decimal
+from django.core.validators import RegexValidator, validate_email
 
-from colorfield.fields import ColorField
+from .validators import validate_file_size
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+phone_regex = RegexValidator(
+    regex=r"^\d{20}", message="Phone number must be 11 digits only."
+)
 
-from django_admin_geomap import GeoItem
 
+# class CustomAccountManager(BaseUserManager):
 
-class CustomAccountManager(BaseUserManager):
+#     def create_superuser(self, email, phone, username, password, **other_fields):
 
-    def create_superuser(self, email, phone, username, password, **other_fields):
+#         other_fields.setdefault('is_staff', True)
+#         other_fields.setdefault('is_superuser', True)
+#         # other_fields.setdefault('is_active', True)
 
-        other_fields.setdefault('is_staff', True)
-        other_fields.setdefault('is_superuser', True)
-        # other_fields.setdefault('is_active', True)
+#         if not email:
+#             raise ValueError('Users must have an email address')
+#         email = self.normalize_email(email)
 
-        if not email:
-            raise ValueError('Users must have an email address')
-        email = self.normalize_email(email)
+#         if other_fields.get('is_staff') is not True:
+#             raise ValueError(
+#                 'Superuser must be assigned to is_staff=True.')
+#         if other_fields.get('is_superuser') is not True:
+#             raise ValueError(
+#                 'Superuser must be assigned to is_superuser=True.')
 
-        if other_fields.get('is_staff') is not True:
-            raise ValueError(
-                'Superuser must be assigned to is_staff=True.')
-        if other_fields.get('is_superuser') is not True:
-            raise ValueError(
-                'Superuser must be assigned to is_superuser=True.')
+#         return self.create_user(email, phone, username, password, **other_fields)
 
-        return self.create_user(email, phone, username, password, **other_fields)
+#     def create_user(self, email, phone, username, password, **other_fields):
+#         if not email:
+#             raise ValueError('Users must have an email address')
 
-    def create_user(self, email, phone, username, password, **other_fields):
-        if not email:
-            raise ValueError('Users must have an email address')
+#         email = self.normalize_email(email)
 
-        email = self.normalize_email(email)
+#         if not phone:
+#             raise ValueError('You must provide phone number')
 
-        if not phone:
-            raise ValueError('You must provide phone number')
-
-        user = self.model(email=email, phone=phone,
-                          username=username, **other_fields)
-        user.set_password(password)
-        user.save()
-        return user
-
+#         user = self.model(email=email, phone=phone,
+#                           username=username, **other_fields)
+#         user.set_password(password)
+#         user.save()
+#         return user
 
 STATES = (
     ("بغداد", "بغداد"),
@@ -72,10 +75,43 @@ STATES = (
 )
 
 
+class UserManager(BaseUserManager):
+    def create_user(self, phone_number, username, email, password=None):
+        if not phone_number:
+            raise ValueError('Phone Number is required')
+        user = self.model(phone_number=phone_number,
+                          email=email, username=username)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, phone_number, username, email, password):
+        user = self.create_user(phone_number, username,
+                                email=email, password=password)
+        user.is_active = True
+        user.is_staff = True
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    # phone_number = models.CharField(
+    #     unique=True, max_length=20, null=False, blank=False, validators=[phone_regex], default='123456')
+    phone_number = models.CharField(
+        unique=True, max_length=20, null=False, blank=False)
     email = models.EmailField(
-        max_length=100, unique=True, default='test@gmail.com')
-    phone = models.CharField(max_length=20, unique=True, default='07801234567')
+        unique=True,
+        max_length=50, blank=True, null=True, validators=[validate_email])
+    otp = models.CharField(max_length=6, default='123456')
+    otp_expiry = models.DateTimeField(blank=True, null=True)
+    max_otp_try = models.CharField(max_length=2, default=settings.MAX_OTP_TRY)
+    otp_max_out = models.DateTimeField(blank=True, null=True)
+    is_active = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    # user_registered_at = models.DateTimeField(auto_now_add=True)
+
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
@@ -86,17 +122,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     state = models.CharField(max_length=20, null=True,
                              blank=True, choices=STATES, default=STATES[0])
 
-    is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    is_superuser = models.BooleanField(default=False)
     shop_name = models.CharField(
         max_length=200, blank=True, unique=True, null=True)
     points = models.IntegerField(default=0)
 
-    objects = CustomAccountManager()
+    objects = UserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['phone', 'username',  'first_name', 'last_name']
+    USERNAME_FIELD = 'phone_number'
+    REQUIRED_FIELDS = ['username', 'email']
 
     def __str__(self):
         return self.username
@@ -104,6 +137,39 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = 'المستخدم'
         verbose_name_plural = 'المستخدمين'
+
+
+#     email = models.EmailField(
+#         max_length=100, unique=True, default='test@gmail.com')
+#     phone = models.CharField(max_length=20, unique=True, default='07801234567')
+#     username = models.CharField(max_length=150, unique=True)
+#     first_name = models.CharField(max_length=50, blank=True, null=True)
+#     last_name = models.CharField(max_length=50, blank=True, null=True)
+#     start_date = models.DateTimeField(default=timezone.now)
+#     image = models.ImageField(
+#         upload_to="users/%Y/%m/%d/", blank=True, null=True)
+#     shop_discription = models.TextField(blank=True, null=True)
+#     state = models.CharField(max_length=20, null=True,
+#                              blank=True, choices=STATES, default=STATES[0])
+
+#     is_staff = models.BooleanField(default=False)
+#     is_active = models.BooleanField(default=True)
+#     is_superuser = models.BooleanField(default=False)
+#     shop_name = models.CharField(
+#         max_length=200, blank=True, unique=True, null=True)
+#     points = models.IntegerField(default=0)
+
+#     objects = CustomAccountManager()
+
+#     USERNAME_FIELD = 'email'
+#     REQUIRED_FIELDS = ['phone', 'username',  'first_name', 'last_name']
+
+#     def __str__(self):
+#         return self.username
+
+#     class Meta:
+#         verbose_name = 'المستخدم'
+#         verbose_name_plural = 'المستخدمين'
 
 
 class Category(models.Model):
@@ -127,7 +193,8 @@ SIZES = (
 
 
 class Size(models.Model):
-    size_name = models.CharField(max_length=4)
+    size_name = models.CharField(
+        max_length=20, blank=False, null=False, unique=True)
 
     def __str__(self):
         return self.size_name
@@ -138,7 +205,8 @@ class Size(models.Model):
 
 
 class Color(models.Model):
-    color_name = models.CharField(max_length=20, blank=True, unique=True)
+    color_name = models.CharField(
+        max_length=20, null=False, blank=False, unique=True)
     color_code = ColorField(default='#FF0000')
 
     def __str__(self):
@@ -165,10 +233,13 @@ class Product(models.Model):
     color = models.ManyToManyField(Color, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
-    image = models.ImageField(upload_to="products/%Y/%m/%d/", blank=False)
+    image = models.FileField(
+        validators=[validate_file_size], upload_to="products/%Y/%m/%d/", blank=False)
     price = models.DecimalField(max_digits=15, decimal_places=2, default=99.99)
     selling_price = models.DecimalField(
         max_digits=15, decimal_places=2, default=99.99, blank=False)
+    diffrenece = models.DecimalField(
+        max_digits=15, decimal_places=2, default=0, blank=True)
     description = models.TextField()
     warranty = models.CharField(max_length=300, null=True, blank=True)
     return_policy = models.CharField(max_length=300, null=True, blank=True)
@@ -176,16 +247,26 @@ class Product(models.Model):
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    photo_1 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_2 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_3 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_4 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_5 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_6 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_7 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_8 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_9 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
-    photo_10 = models.ImageField(upload_to='products/%Y/%m/%d/', blank=True)
+    photo_1 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_2 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_3 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_4 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_5 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_6 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_7 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_8 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_9 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
+    photo_10 = models.FileField(
+        validators=[validate_file_size], upload_to='products/%Y/%m/%d/', blank=True)
 
     objects = models.Manager()
     productobjects = ProductObjects()
@@ -201,6 +282,7 @@ class Product(models.Model):
         return mark_safe('<img src="%s" width="100" />' % (self.image.url))
 
     def save(self, *args, **kwargs):
+        self.diffrenece = self.price - self.selling_price
         if self.quantity <= 0:
             self.is_public = False
         super(Product, self).save(*args, **kwargs)
@@ -240,23 +322,22 @@ class Product(models.Model):
 #     def __str__(self):
 #         return f"{self.product.title},  quantity: {self.quantity}"
 
-
 ORDER_STATUS = (
-    ("Order Received", "Order Recevied"),
-    ("Order Processing", "Order Processing"),
-    ("on the way", "on the way"),
-    ("Order Complated", "Order Complated"),
-    ("Order Canceled", "Order Canceled")
+    ("Order Received", "تم وصول الطلب"),
+    ("Order Processing", "جاري تحضير الطلب"),
+    ("on the way", "الطلب في الطريق"),
+    ("Order Complated", "اكتمل الطلب"),
+    ("Order Canceled", "تم إلغاء الطلب")
 )
 
 DISCOUNT_STATUS = (
-    ("No Discound", "No Discound"),
-    ("5 % Discount", "5 % Discount"),
-    ("10 % Discount", "10 % Discount"),
-    ("20 % Discount", "20 % Discount"),
-    ("30 % Discount", "30 % Discount"),
-    ("40 % Discount", "40 % Discount"),
-    ("50 % Discount", "50 % Discount"),
+    ("No Discound", "بلا تخفيض"),
+    ("5 % Discount", "5% تخفيض"),
+    ("10 % Discount", "10% تخفيض"),
+    ("20 % Discount", "20% تخفيض"),
+    ("30 % Discount", "30% تخفيض"),
+    ("40 % Discount", "40% تخفيض"),
+    ("50 % Discount", "50% تخفيض"),
 )
 
 
@@ -280,7 +361,7 @@ class ProductOrder(models.Model):
 class Order(models.Model, GeoItem):
     # cart = models.OneToOneField(
     #     Cart, on_delete=models.CASCADE, null=True, blank=True)
-    product = models.ManyToManyField(ProductOrder, null=True, blank=True)
+    product = models.ManyToManyField(ProductOrder, blank=True)
     ordered_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     owner = models.ForeignKey(

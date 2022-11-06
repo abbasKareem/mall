@@ -1,4 +1,3 @@
-import pprint
 from django.contrib import admin
 from django_admin_geomap import ModelAdmin
 from django.utils.html import format_html
@@ -42,14 +41,14 @@ def download_csv(modeladmin, request, queryset):
 class UserAdminConfig(UserAdmin):
     model = CustomUser
     readonly_fields = ['points']
-    search_fields = ('phone', 'username')
+    search_fields = ('phone_number', 'username')
     list_filter = ('is_staff', 'start_date', 'state')
     ordering = ('-start_date',)
     list_per_page = 10
-    list_display = ('phone', 'username', 'is_superuser', 'is_active',
+    list_display = ('phone_number', 'username', 'is_superuser', 'is_active',
                     'is_staff', 'shop_name', 'state')
     fieldsets = (
-        (None, {'fields': ('phone', 'username', 'email')}),
+        (None, {'fields': ('phone_number', 'username', 'email', 'otp')}),
         ('الصلاحيات', {'fields': ('is_staff', 'is_superuser', 'is_active',
                                   'groups', 'user_permissions')}),
         ('معلومات المحل', {
@@ -105,7 +104,6 @@ class ProductAdmin(admin.ModelAdmin):
         return qs.filter(user=request.user)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        print(request.user)
         if db_field.name == "user":
             kwargs["queryset"] = CustomUser.objects.filter(
                 username=request.user.username)
@@ -132,7 +130,7 @@ class OrderAdmin(ModelAdmin):
         ('معلومات الزبون', {'fields': ('points', 'email',
          'user_phone',   'user_name', 'full_name')}),
         ('معلومات الطلب', {'fields': ('quantity_of_product_ordered',
-         'product_ordered','created_at', 'total', 'total_after_discount', 'message')}),
+         'product_ordered', 'created_at', 'total', 'total_after_discount', 'message')}),
     )
 
     readonly_fields = ['owner', 'user_name', 'product', 'mobile', 'email', 'since',
@@ -181,7 +179,7 @@ class OrderAdmin(ModelAdmin):
 
     def since(self, obj):
         date_time_dif = datetime.now(timezone.utc) - obj.created_at
-        return str(date_time_dif)[:-6] 
+        return str(date_time_dif)[:-6]
 
     def points(self, obj):
         return obj.ordered_by.points
@@ -193,7 +191,7 @@ class OrderAdmin(ModelAdmin):
         return obj.owner.shop_name
 
     def user_phone(self, obj):
-        return obj.ordered_by.phone
+        return obj.ordered_by.phone_number
 
     def full_name(self, obj):
         # return f"<h1>{obj.ordered_by.first_name}   {obj.ordered_by.last_name}</h1>"
@@ -265,7 +263,6 @@ class SizeAdmin(admin.ModelAdmin):
     change_list_template = 'change_list_size.html'
 
 
-
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['title']
     list_per_page = 20
@@ -274,8 +271,8 @@ class CategoryAdmin(admin.ModelAdmin):
     change_list_template = 'change_list_category.html'
 
 
-
 admin.site.register(CustomUser, UserAdminConfig)
+# admin.site.register(CustomUser)
 
 admin.site.register(Size, SizeAdmin)
 # admin.site.register(ProductOrder, ProductOrderAdmin)

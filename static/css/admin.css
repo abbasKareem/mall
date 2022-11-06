@@ -1,10 +1,11 @@
 #header {
-  background: rgba(223, 50, 50, 0.809);
-  color: #fff;
+  /* background: rgba(213, 255, 114, 0.809); */
+  background: #ffc107ff;
+  color: rgb(0, 0, 0);
 }
 
 #branding h1 {
-  color: #fff;
+  color: rgb(5, 0, 0);
 }
 
 /* a:link,
@@ -13,7 +14,9 @@ a:visited {
 } */
 
 div.breadcrumbs {
-  background: #30caa0;
+  /* background: #30caa0; */
+  background: #ffe68f;
+  /* color: #10284e; */
   color: #10284e;
 }
 
@@ -24,7 +27,8 @@ div.breadcrumbs a {
 .module h2,
 .module caption,
 .inline-group h2 {
-  background: rgba(223, 50, 50, 0.809);
+  /* background: rgba(223, 50, 50, 0.809); */
+  background: rgb(255, 181, 7);
 }
 
 .module h2 {
@@ -49,11 +53,12 @@ a.button {
 }
 
 #id_discount {
-  background-color: #30caa0;
+  background-color: #ecb70b;
   color: black;
 }
+
 #id_order_status {
-  background-color: #30caa0;
+  background-color: #ecb70b;
   color: black;
 }
 
